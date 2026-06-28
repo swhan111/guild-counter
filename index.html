@@ -1150,13 +1150,18 @@ async function loadData(){
 }
 
 function initRealtimeAll(){
+  let reloadTimer = null;
   try {
     const ws = new WebSocket(`wss://qkitliijycvthuxcjqnc.supabase.co/realtime/v1/websocket?apikey=${SUPABASE_JWT}&vsn=1.0.0`);
     ws.onopen = () => { ws.send(JSON.stringify({topic:'realtime:*',event:'phx_join',payload:{},ref:'1'})); };
     ws.onmessage = (e) => {
       try {
         const msg = JSON.parse(e.data);
-        if(msg.event !== 'phx_reply') loadData();
+        if(msg.event !== 'phx_reply' && msg.event !== 'heartbeat') {
+          // 디바운스: 마지막 이벤트 후 1.5초 뒤에만 리로드
+          clearTimeout(reloadTimer);
+          reloadTimer = setTimeout(loadData, 1500);
+        }
       } catch(e2){}
     };
   } catch(e){}
