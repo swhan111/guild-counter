@@ -1327,6 +1327,7 @@ function renderTeamBottom(team){
     <div class="pet-name-label">${esc(pet)}</div>
   </div>` : '';
 
+  if(!skillHTML && !petHTML) return '';
   return `<div class="team-bottom">${skillHTML}${petHTML}</div>`;
 }
 function renderEquipSummary(team){
@@ -1384,7 +1385,9 @@ function renderDefThumbs(groupList){
   if(!groupList.length){strip.style.display='none';return;}
   strip.style.display='block';
   list.innerHTML=groupList.map(g=>{
-    const chars=(g.def.chars||[]).slice(0,3);
+    const backs  = (g.def.chars||[]).filter(c=>c.pos==='back');
+    const fronts = (g.def.chars||[]).filter(c=>c.pos==='front');
+    const chars  = [...backs,...fronts].slice(0,3);
     const portraits=chars.map(c=>{
       const img=IMAGES.chars?.[c.name]||'';
       return `<div class="def-thumb-portrait">${img?`<img src="${img}">`:`${esc((c.name||'?').slice(0,2))}`}</div>`;
@@ -1433,7 +1436,7 @@ function renderCounters(){
       <div class="ctr-slide" id="ctr-${def.id}-${i}" style="${i===0?'':'display:none'}">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
           <div class="cb-zone-title atk">▶ 카운터 ${i+1}</div>
-          <button class="btn btn-danger btn-sm" onclick="reqDelete('counter','${c.id}');event.stopPropagation();">✕ 삭제</button>
+          <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();reqDelete('counter','${c.id}');">✕ 삭제</button>
         </div>
         ${renderFormationGrid(c.atk, false)}
         ${renderTeamBottom(c.atk)}
