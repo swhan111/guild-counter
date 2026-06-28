@@ -1318,7 +1318,11 @@ function renderTeamBottom(team){
   }
 
   const petHTML = pet ? `<div class="pet-section">
-    <div class="pet-icon">${petImg?`<img src="${petImg}" alt="${esc(pet)}">`:''}
+    <div class="pet-icon">
+      ${petImg
+        ? `<img src="${petImg}" alt="${esc(pet)}">`
+        : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--text2);">${esc(pet.slice(0,2))}</div>`
+      }
     </div>
     <div class="pet-name-label">${esc(pet)}</div>
   </div>` : '';
@@ -1417,16 +1421,25 @@ function renderCounters(){
   const blocks=groupList.map(g=>{
     const {def,ctrs}=g;
     const gradeBadge=def.grade?`<span class="badge badge-grade-${def.grade}">${def.grade}</span>`:'';
-    // 카운터 슬라이드 버튼
-    const slideNav=ctrs.length>1?`<div class="atk-slide-nav" onclick="event.stopPropagation()">${ctrs.map((c,i)=>`<button class="atk-slide-btn${i===0?' active':''}" onclick="switchCtrSlide('${def.id}',${ctrs.length},${i},this)">${i+1}번</button>`).join('')}</div>`:'';    const slides=ctrs.map((c,i)=>`<div class="ctr-slide" id="ctr-${def.id}-${i}" style="${i===0?'':'display:none'}">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-        <div class="cb-zone-title atk">▶ 카운터 ${i+1}</div>
-        <button class="btn btn-danger btn-sm" onclick="reqDelete('counter','${c.id}')">✕ 삭제</button>
-      </div>
-      ${renderFormationGrid(c.atk, false)}
-      ${renderTeamBottom(c.atk)}
-      ${c.memo?`<div class="memo-text">${esc(c.memo)}</div>`:''}
-    </div>`).join('');
+
+    // 슬라이드 버튼 — 헤더에 표시
+    const slideNav=ctrs.length>1
+      ?`<div class="atk-slide-nav" onclick="event.stopPropagation()">${ctrs.map((c,i)=>
+          `<button class="atk-slide-btn${i===0?' active':''}" onclick="switchCtrSlide('${def.id}',${ctrs.length},${i},this)">${i+1}번</button>`
+        ).join('')}</div>`:'' ;
+
+    // 카운터 슬라이드 (삭제 버튼 포함)
+    const slides=ctrs.map((c,i)=>`
+      <div class="ctr-slide" id="ctr-${def.id}-${i}" style="${i===0?'':'display:none'}">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+          <div class="cb-zone-title atk">▶ 카운터 ${i+1}</div>
+          <button class="btn btn-danger btn-sm" onclick="reqDelete('counter','${c.id}');event.stopPropagation();">✕ 삭제</button>
+        </div>
+        ${renderFormationGrid(c.atk, false)}
+        ${renderTeamBottom(c.atk)}
+        ${c.memo?`<div class="memo-text">${esc(c.memo)}</div>`:''}
+      </div>`).join('');
+
     return `<div class="counter-block">
       <div class="cb-header" onclick="toggleCbBody('cb-body-${def.id}',this)">
         <span class="cb-def-label">방어</span>
@@ -1434,7 +1447,7 @@ function renderCounters(){
         <span class="cb-deck-name">${esc(teamLabel(def))}</span>
         <span class="cb-atk-label">카운터 ${ctrs.length}개</span>
         ${slideNav}
-        <span class="cb-toggle">▼</span>
+        <span class="cb-toggle" style="margin-left:auto;">▼</span>
       </div>
       <div class="cb-body open" id="cb-body-${def.id}">
         <div class="cb-vs-wrap">
@@ -1443,16 +1456,12 @@ function renderCounters(){
             ${renderFormationGrid(def, true)}
             ${renderTeamBottom(def)}
           </div>
-          <div class="cb-vs-center">
-            <div class="vs-badge">VS</div>
-          </div>
+          <div class="cb-vs-center"><div class="vs-badge">VS</div></div>
           <div class="cb-atk-zone">
             <div class="atk-slider">${slides}</div>
           </div>
         </div>
-        ${def.memo||ctrs.some(c=>c.memo)?`<div class="cb-bottom">
-          ${def.memo?`<div><div class="cb-section-title">방어팀 메모</div><div class="cb-memo-text">${esc(def.memo)}</div></div>`:'<div></div>'}
-        </div>`:''}
+        ${def.memo?`<div style="padding:8px 14px 10px;"><div class="cb-memo-text">${esc(def.memo)}</div></div>`:''}
       </div>
     </div>`;
   }).join('');
