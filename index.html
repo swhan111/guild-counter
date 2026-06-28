@@ -1144,17 +1144,17 @@ async function loadData(){
     const newCounters = await cr.json();
     const newEquips   = await er.json();
 
-    // 배열인지 확인 후에만 덮어씀 (에러 응답이면 기존 데이터 유지)
+    console.log('[loadData] teams 응답:', newTeams);
+    console.log('[loadData] counters 응답:', newCounters);
+
     if(Array.isArray(newTeams))    teams    = newTeams;
     if(Array.isArray(newCounters)) counters = newCounters;
     if(Array.isArray(newEquips))   gwEquips = newEquips;
   } catch(e) {
-    console.error('loadData 오류:', e);
-    // 오류 시 기존 데이터 유지 — 화면 렌더만 다시
+    console.error('[loadData] 오류:', e);
   }
   renderTeams('defense'); renderTeams('attack');
   renderCounters(); renderGwGallery();
-  // Realtime은 첫 로드 시에만 초기화
   if(!window._realtimeInit){ window._realtimeInit=true; initRealtimeAll(); }
 }
 
