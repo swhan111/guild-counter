@@ -73,9 +73,13 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .filter-btn.active{background:rgba(200,168,75,.15);border-color:var(--gold);color:var(--gold);}
 
 /* ── 팀 그리드 ── */
-.team-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
-@media(max-width:1100px){.team-grid{grid-template-columns:repeat(2,1fr);}}
-@media(max-width:640px){.team-grid{grid-template-columns:1fr;}}
+.team-grid{display:flex;flex-direction:column;gap:8px;}
+
+/* ── 카운터 전체 레이아웃 ── */
+.counter-layout{display:grid;grid-template-columns:320px 1fr;gap:14px;align-items:start;}
+@media(max-width:900px){.counter-layout{grid-template-columns:1fr;}}
+
+
 .team-card{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:11px;transition:border-color .15s;}
 .team-card:hover{border-color:var(--border2);}
 .tc-top{display:flex;align-items:center;gap:6px;margin-bottom:10px;flex-wrap:wrap;}
@@ -364,7 +368,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 <!-- ───── 길드전 카운터 섹션 ───── -->
 <div id="section-counter" class="top-section active">
 <div class="container">
-  <div style="display:grid;grid-template-columns:340px 1fr;gap:14px;align-items:start;">
+  <div class="counter-layout">
   <!-- 팀 목록 패널 -->
   <div class="panel">
     <div class="panel-header">
@@ -1385,12 +1389,10 @@ function renderDefThumbs(groupList){
   if(!groupList.length){strip.style.display='none';return;}
   strip.style.display='block';
   list.innerHTML=groupList.map(g=>{
-    const backs  = (g.def.chars||[]).filter(c=>c.pos==='back');
-    const fronts = (g.def.chars||[]).filter(c=>c.pos==='front');
-    const chars  = [...backs,...fronts].slice(0,3);
-    const portraits=chars.map(c=>{
+    const allChars = (g.def.chars||[]).filter(c=>c.name);
+    const portraits=allChars.map(c=>{
       const img=IMAGES.chars?.[c.name]||'';
-      return `<div class="def-thumb-portrait">${img?`<img src="${img}">`:`${esc((c.name||'?').slice(0,2))}`}</div>`;
+      return `<div class="def-thumb-portrait">${img?`<img src="${img}">`:`<span>${esc((c.name||'?').slice(0,2))}</span>`}</div>`;
     }).join('');
     const isActive=defThumbFilter===g.def.id;
     const name=teamLabel(g.def);
@@ -1431,12 +1433,12 @@ function renderCounters(){
           `<button class="atk-slide-btn${i===0?' active':''}" onclick="switchCtrSlide('${def.id}',${ctrs.length},${i},this)">${i+1}번</button>`
         ).join('')}</div>`:'' ;
 
-    // 카운터 슬라이드 (삭제 버튼 포함)
+    // 카운터 슬라이드 (삭제 버튼 항상 표시)
     const slides=ctrs.map((c,i)=>`
       <div class="ctr-slide" id="ctr-${def.id}-${i}" style="${i===0?'':'display:none'}">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
           <div class="cb-zone-title atk">▶ 카운터 ${i+1}</div>
-          <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();reqDelete('counter','${c.id}');">✕ 삭제</button>
+          <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();reqDelete('counter','${c.id}')">✕ 삭제</button>
         </div>
         ${renderFormationGrid(c.atk, false)}
         ${renderTeamBottom(c.atk)}
