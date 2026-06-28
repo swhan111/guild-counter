@@ -1292,7 +1292,7 @@ function renderTeamBottom(team){
     if(c.skillAw) sk.push({name:c.name,num:'각',awakened:true});
     return sk;
   }) || [];
-  const skillOrder = team.skillOrder||[];
+  const skillOrder = team.skill_order||[];
   const pet = team.pet||'';
   const petImg = IMAGES.pets?.[pet]||'';
 
@@ -1484,7 +1484,7 @@ function openTeamModal(id){
   const both=document.getElementById('tbtn-both');
   if(both){ both.checked=false; both.parentElement.style.display=id?'none':'flex'; }
   tmChars=t?.chars?.length?JSON.parse(JSON.stringify(t.chars)):[{name:'',pos:'back',awakened:false},{name:'',pos:'back',awakened:false},{name:'',pos:'front',awakened:false}];
-  tmSkills=t?.skillOrder?[...t.skillOrder]:['','',''];
+  tmSkills=t?.skill_order?[...t.skill_order]:['','',''];
   renderCharEditors(); updateSkillEditors();
   document.getElementById('modal-team').classList.add('open');
 }
@@ -1544,7 +1544,7 @@ async function saveTeam(){
     formation:document.getElementById('tm-formation').value,
     grade:document.getElementById('tm-grade').value,
     chars:JSON.parse(JSON.stringify(tmChars)),
-    skillOrder:tmSkills.filter(s=>s),
+    skill_order:tmSkills.filter(s=>s),
     pet:document.getElementById('tm-pet').value.trim(),
     memo:document.getElementById('tm-memo').value.trim(),
   };
@@ -1555,14 +1555,22 @@ async function saveTeam(){
       const r1=await api('teams',{method:'POST',prefer:'resolution=merge-duplicates',body:JSON.stringify(def)});
       const r2=await api('teams',{method:'POST',prefer:'resolution=merge-duplicates',body:JSON.stringify(atk)});
       if(r1.ok && r2.ok){ teams.push(def,atk); }
-      else { alert('저장 실패. 다시 시도해주세요.'); setStatus(''); return; }
+      else {
+        const err=await r1.json().catch(()=>({}));
+        alert('저장 실패: '+(err.message||err.hint||JSON.stringify(err)));
+        setStatus(''); return;
+      }
     } else {
       const t={...base,id:editingTeamId||uid(),type:currentTeamType};
       const r=await api('teams',{method:'POST',prefer:'resolution=merge-duplicates',body:JSON.stringify(t)});
       if(r.ok){
         if(editingTeamId){ const idx=teams.findIndex(x=>x.id===editingTeamId); if(idx>=0) teams[idx]=t; }
         else teams.push(t);
-      } else { alert('저장 실패. 다시 시도해주세요.'); setStatus(''); return; }
+      } else {
+        const err=await r.json().catch(()=>({}));
+        alert('저장 실패: '+(err.message||err.hint||JSON.stringify(err)));
+        setStatus(''); return;
+      }
     }
   } catch(e){ alert('네트워크 오류: '+e.message); setStatus(''); return; }
   setStatus('');
