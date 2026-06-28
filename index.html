@@ -1140,13 +1140,22 @@ async function loadData(){
       api('counters?select=*&order=created_at.asc'),
       api('gw_equip?select=*&order=created_at.asc')
     ]);
-    teams    = (await tr.json()) || [];
-    counters = (await cr.json()) || [];
-    gwEquips = (await er.json()) || [];
-  } catch(e) { console.error(e); }
+    const newTeams    = await tr.json();
+    const newCounters = await cr.json();
+    const newEquips   = await er.json();
+
+    // 배열인지 확인 후에만 덮어씀 (에러 응답이면 기존 데이터 유지)
+    if(Array.isArray(newTeams))    teams    = newTeams;
+    if(Array.isArray(newCounters)) counters = newCounters;
+    if(Array.isArray(newEquips))   gwEquips = newEquips;
+  } catch(e) {
+    console.error('loadData 오류:', e);
+    // 오류 시 기존 데이터 유지 — 화면 렌더만 다시
+  }
   renderTeams('defense'); renderTeams('attack');
   renderCounters(); renderGwGallery();
-  initRealtimeAll();
+  // Realtime은 첫 로드 시에만 초기화
+  if(!window._realtimeInit){ window._realtimeInit=true; initRealtimeAll(); }
 }
 
 function initRealtimeAll(){
@@ -1540,17 +1549,24 @@ async function saveTeam(){
     memo:document.getElementById('tm-memo').value.trim(),
   };
   setStatus('저장 중...');
-  if(bothChecked){
-    const def={...base,id:uid(),type:'defense'}, atk={...base,id:uid(),type:'attack'};
-    await upsertTeam(def); await upsertTeam(atk);
-    teams.push(def,atk);
-  } else {
-    const t={...base,id:editingTeamId||uid(),type:currentTeamType};
-    await upsertTeam(t);
-    if(editingTeamId){ const idx=teams.findIndex(x=>x.id===editingTeamId); if(idx>=0) teams[idx]=t; }
-    else teams.push(t);
-  }
-  setStatus(''); closeModal('modal-team');
+  try {
+    if(bothChecked){
+      const def={...base,id:uid(),type:'defense'}, atk={...base,id:uid(),type:'attack'};
+      const r1=await api('teams',{method:'POST',prefer:'resolution=merge-duplicates',body:JSON.stringify(def)});
+      const r2=await api('teams',{method:'POST',prefer:'resolution=merge-duplicates',body:JSON.stringify(atk)});
+      if(r1.ok && r2.ok){ teams.push(def,atk); }
+      else { alert('저장 실패. 다시 시도해주세요.'); setStatus(''); return; }
+    } else {
+      const t={...base,id:editingTeamId||uid(),type:currentTeamType};
+      const r=await api('teams',{method:'POST',prefer:'resolution=merge-duplicates',body:JSON.stringify(t)});
+      if(r.ok){
+        if(editingTeamId){ const idx=teams.findIndex(x=>x.id===editingTeamId); if(idx>=0) teams[idx]=t; }
+        else teams.push(t);
+      } else { alert('저장 실패. 다시 시도해주세요.'); setStatus(''); return; }
+    }
+  } catch(e){ alert('네트워크 오류: '+e.message); setStatus(''); return; }
+  setStatus('');
+  closeModal('modal-team');
   renderTeams('defense'); renderTeams('attack'); renderCounters();
 }
 
