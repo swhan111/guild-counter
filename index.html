@@ -1407,7 +1407,8 @@ function renderCounters(){
       if(!txt.includes(q)) return;
     }
     if(!groups[c.def_id]) groups[c.def_id]={def,ctrs:[]};
-    groups[c.def_id].ctrs.push({...c,atk});
+    // atk은 항상 getTeam으로 최신 데이터 사용
+    groups[c.def_id].ctrs.push({id:c.id, def_id:c.def_id, atk_id:c.atk_id, memo:c.memo, atk});
   });
   const allGroups=Object.values(groups);
   renderDefThumbs(allGroups);
